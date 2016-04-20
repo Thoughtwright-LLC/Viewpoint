@@ -587,6 +587,34 @@ module Viewpoint::EWS::SOAP
       do_soap_request(req)
     end
 
+    # Update properties for a specified calendar folder
+    # @see http://msdn.microsoft.com/en-us/library/aa580519(v=EXCHG.140).aspx
+    # @param [Array<Hash>] folder_changes an Array of well formatted Hashes. Ex:
+    # [{ id: xxx, change_key: xxx, permissions: []}]
+    def update_calendar_folder(folder_changes)
+      req = build_soap! do |type, builder|
+        if(type == :header)
+        else
+          builder.nbuild.UpdateFolder {
+            builder.nbuild.parent.default_namespace = @default_ns
+            builder.nbuild[NS_EWS_MESSAGES].FolderChanges {
+              folder_changes.each do |fc|
+                builder.nbuild[NS_EWS_TYPES].FolderChange {
+                  builder.dispatch_folder_id!(fc)
+                  builder.nbuild[NS_EWS_TYPES].Updates {
+                    if fc[:permissions].present?
+                      builder.update_calendar_folder_permissions!(fc[:permissions])
+                    end
+                  }
+                }
+              end
+            }
+          }
+        end
+      end
+      do_soap_request(req)
+    end
+
     # Empties folders in a mailbox.
     # @see http://msdn.microsoft.com/en-us/library/ff709484.aspx
     # @param [Hash] opts

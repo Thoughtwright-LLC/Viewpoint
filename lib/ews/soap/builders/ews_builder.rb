@@ -1258,6 +1258,69 @@ module Viewpoint::EWS::SOAP
       @nbuild[NS_EWS_MESSAGES].GetRoomLists
     end
 
+    def update_calendar_folder_permissions!(permissions)
+      @nbuild[NS_EWS_TYPES].SetFolderField{
+        dispatch_field_uri!({field_uri: 'folder:PermissionSet'}, NS_EWS_TYPES)
+        @nbuild[NS_EWS_TYPES].CalendarFolder{
+          if permissions.present?
+             calendar_permissions!(permissions)
+          end
+        }
+      }
+    end
+
+    def calendar_permissions!(permissions)
+      @nbuild[NS_EWS_TYPES].PermissionSet{
+        @nbuild[NS_EWS_TYPES].CalendarPermissions{
+          permissions.each do |permission|
+            calendar_permission!(permission)
+          end
+        }
+      }
+    end
+
+    def calendar_permission!(permission)
+      @nbuild[NS_EWS_TYPES].CalendarPermission{
+        dispatch_user_id(permission[:user_id])
+        if permission[:level] == "Custom"
+          if permission[:create_items].present?
+            @nbuild[NS_EWS_TYPES].CanCreateItems(permission[:create_items])
+          end
+          if permission[:create_subfolders].present?
+            @nbuild[NS_EWS_TYPES].CanCreateSubFolders(permission[:create_subfolders])
+          end
+          if permission[:folder_owner].present?
+            @nbuild[NS_EWS_TYPES].IsFolderOwner(permission[:folder_owner])
+          end
+          if permission[:folder_visible].present?
+            @nbuild[NS_EWS_TYPES].IsFolderVisible(permission[:folder_visible])
+          end
+          if permission[:folder_contact].present?
+            @nbuild[NS_EWS_TYPES].IsFolderContact(permission[:folder_contact])
+          end
+          if permission[:edit_items].present?
+            @nbuild[NS_EWS_TYPES].EditItems(permission[:edit_items])
+          end
+          if permission[:delete_items].present?
+            @nbuild[NS_EWS_TYPES].DeleteItems(permission[:delete_items])
+          end
+          if permission[:read_items].present?
+            @nbuild[NS_EWS_TYPES].ReadItems(permission[:read_items])
+          end
+        end
+        @nbuild[NS_EWS_TYPES].CalendarPermissionLevel(permission[:level])
+      }
+    end
+
+    def dispatch_user_id(user_id)
+      @nbuild[NS_EWS_TYPES].UserId{
+        if(user_id.is_a?(String))
+          @nbuild[NS_EWS_TYPES].PrimarySmtpAddress(user_id)
+        elsif(user_id.is_a?(Symbol))
+          @nbuild[NS_EWS_TYPES].DistinguishedUser(user_id)
+        end
+      }
+    end
 
 private
 

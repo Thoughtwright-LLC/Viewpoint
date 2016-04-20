@@ -126,6 +126,11 @@ module Viewpoint::EWS::FolderAccessors
     sync_folders_parser(resp)
   end
 
+  def update_calendar_folder_permissions(opts = {})
+    args = opts.clone
+    resp = ews.update_calendar_folder(args)
+    update_folder_parser(resp)
+  end
 
 private
 
@@ -137,7 +142,7 @@ private
     folder_id = {:id => opts[:root]}
     folder_id[:act_as] = opts[:act_as] if opts[:act_as]
     if( opts[:folder_type] )
-      restr = { :is_equal_to => 
+      restr = { :is_equal_to =>
         [
           {:field_uRI => {:field_uRI=>'folder:FolderClass'}},
           {:field_uRI_or_constant=>{:constant =>
@@ -202,6 +207,17 @@ private
       class_by_name(ftype).new(ews, f[ftype])
     else
       raise EwsFolderNotFound, "Could not retrieve folder. #{resp.code}: #{resp.message}"
+    end
+  end
+
+  # @param [Viewpoint::EWS::SOAP::EwsSoapResponse] resp
+  def update_folder_parser(resp)
+    if(resp.status == 'Success')
+      f = resp.response_message[:elems][:folders][:elems][0]
+      ftype = f.keys.first
+      class_by_name(ftype).new(ews, f[ftype])
+    else
+      raise EwsError, "Could not update folder. #{resp.code}: #{resp.message}"
     end
   end
 
