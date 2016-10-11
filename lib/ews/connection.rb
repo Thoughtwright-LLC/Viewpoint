@@ -68,7 +68,7 @@ class Viewpoint::EWS::Connection
   # @param soapmsg [String]
   # @param opts [Hash] misc opts for handling the Response
   def dispatch(ews, soapmsg, opts)
-    respmsg = post(soapmsg)
+    respmsg = post(soapmsg, opts)
     @log.debug <<-EOF.gsub(/^ {6}/, '')
       Received SOAP Response:
       ----------------
@@ -88,8 +88,12 @@ class Viewpoint::EWS::Connection
   # Send a POST to the web service
   # @return [String] If the request is successful (200) it returns the body of
   #   the response.
-  def post(xmldoc)
-    headers = {'Content-Type' => 'text/xml'}
+  def post(xmldoc, opts = {})
+    headers = { 'Content-Type' => 'text/xml' }
+    if opts[:use_xanchor_header] && opts[:xanchor_mailbox_address]
+      headers['X-AnchorMailbox'] = opts[:xanchor_mailbox_address]
+      headers['X-PreferServerAffinity'] = true
+    end
     check_response( @httpcli.post(@endpoint, xmldoc, headers) )
   end
 

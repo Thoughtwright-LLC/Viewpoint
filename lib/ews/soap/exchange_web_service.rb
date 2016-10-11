@@ -28,7 +28,7 @@ module Viewpoint::EWS::SOAP
     include ExchangeSynchronization
     include ExchangeTimeZones
 
-    attr_accessor :server_version, :auto_deepen, :no_auto_deepen_behavior, :connection, :impersonation_type, :impersonation_address
+    attr_accessor :server_version, :auto_deepen, :no_auto_deepen_behavior, :connection, :impersonation_type, :impersonation_address, :use_xanchor_header, :xanchor_mailbox_address
 
     # @param [Viewpoint::EWS::Connection] connection the connection object
     # @param [Hash] opts additional options to the web service
@@ -44,6 +44,8 @@ module Viewpoint::EWS::SOAP
       @no_auto_deepen_behavior = :raise
       @impersonation_type = ""
       @impersonation_address = ""
+      @use_xanchor_header = opts.fetch(:use_xanchor_header, false)
+      @xanchor_mailbox_address = opts[:xanchor_mailbox_address]
     end
 
     def delete_attachment
@@ -209,6 +211,7 @@ module Viewpoint::EWS::SOAP
         #{soapmsg}
         ----------------
       EOF
+      opts.merge!(use_xanchor_header: use_xanchor_header, xanchor_mailbox_address: xanchor_mailbox_address)
       connection.dispatch(self, soapmsg, opts)
     end
 
